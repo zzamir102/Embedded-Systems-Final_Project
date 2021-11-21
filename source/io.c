@@ -40,6 +40,18 @@ void LCD_WriteCommand (unsigned char Command) {
    delay_ms(2); // ClearScreen requires 1.52ms to execute
 }
 
+void LCD_CustomChar(unsigned char loc, unsigned char *p)
+{
+ unsigned char i;
+ if(loc<8) //If valid address
+ {
+  LCD_WriteCommand(0x40+(loc*8)); //Write to CGRAM
+  for(i=0;i<8;i++)
+  LCD_WriteData(p[i]); //Write the character pattern to CGRAM
+ }
+  LCD_WriteCommand(0x80); //shift back to DDRAM location 0
+}
+
 void LCD_WriteData(unsigned char Data) {
    SET_BIT(CONTROL_BUS,RS);
    DATA_BUS = Data;
