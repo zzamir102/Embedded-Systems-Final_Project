@@ -1,9 +1,9 @@
-/*	Author: lab
+/*	Author: Zamir Noor
  *  Partner(s) Name: 
- *	Lab Section:
- *	Assignment: Lab #  Exercise #
+ *	Lab Section:21
+ *	Assignment: Custom Lab Assignment
  *	Exercise Description: [optional - include for your own benefit]
- *
+ *	Video Link: https://www.youtube.com/watch?v=-z5c4OJ9VMc
  *	I acknowledge all content contained herein, excluding template or example
  *	code, is my own original work.
  */

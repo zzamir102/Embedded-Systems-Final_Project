@@ -40,14 +40,14 @@ void LCD_WriteCommand (unsigned char Command) {
    delay_ms(2); // ClearScreen requires 1.52ms to execute
 }
 
-void LCD_CustomChar(unsigned char loc, unsigned char *p)
+void LCD_CustomChar(unsigned char column, unsigned char *string)
 {
  unsigned char i;
- if(loc<8) //If valid address
+ if(column<8) //If valid address
  {
-  LCD_WriteCommand(0x40+(loc*8)); //Write to CGRAM
+  LCD_WriteCommand(0x40+(column*8)); //Write to CGRAM
   for(i=0;i<8;i++)
-  LCD_WriteData(p[i]); //Write the character pattern to CGRAM
+  LCD_WriteData(string[i]); //Write the character pattern to CGRAM
  }
   LCD_WriteCommand(0x80); //shift back to DDRAM location 0
 }
