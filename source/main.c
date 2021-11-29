@@ -22,8 +22,10 @@
 #define resetButton (~PINA & 0x04)
 unsigned char startGame = 0x00;
 unsigned char bestScore = 8;
-unsigned char character[8] = { 0x04,0x04,0x04,0x04,0x15,0x0e,0x04,0x00 };
-
+unsigned char character1[8] = { 0x00,0x04,0x0A,0x11,0x0A,0x04,0x04,0x00 };
+unsigned char character2[8] = { 0x1F,0x00,0x0A,0x00,0x11,0x0E,0x00,0x1F };
+unsigned char character3[8] = { 0x11,0x0E,0x0A,0x04,0x15,0x0E,0x04,0x04 };
+unsigned char character4[8] = { 0x04,0x04,0x1F,0x15,0x04,0x0E,0x11,0x11 };
 
 enum toggleStart_States {toggleStart_Init, toggleStart_press, toggleScore_press, toggleStart_wait, toggleScore_wait};
 
@@ -86,19 +88,67 @@ int toggleStartTick (int state) {
 			break;
 		case toggleStart_wait:
 			startGame = 0x01;
-			LCD_DisplayString(1, "Game started"); //testing states
+			//LCD_DisplayString(1, "Game started"); //testing states
 			break;
 		case toggleScore_press:
 			LCD_ClearScreen();
 			break;
 		case toggleScore_wait:
-			LCD_CustomChar(0, character);
+			LCD_CustomChar(0, character1);
 			LCD_WriteData(0x00);
 			break;
 	}
 	return state;
 }
 
+enum chooseChar_States {charInit, charSelect};
+
+int chooseChar(int state) {
+
+	switch(state) {
+		case charInit:
+			if (startGame == 0x00) {
+				state = charInit;
+			}
+			else if (startGame == 0x01) {
+				state = charSelect;
+			}
+			break;
+		case charSelect:
+			if (startGame == 0x01) {
+				state = charSelect;
+			}
+			else {
+				state = charInit;
+			}
+			break;
+		default:
+			break;
+	}
+	switch(state) {
+		case charInit:
+			break;
+		case charSelect:
+			LCD_DisplayString(17, "Character Select");
+			LCD_CustomChar(0, character1);
+			LCD_CustomChar(1, character2);
+			LCD_CustomChar(2, character3);
+			LCD_CustomChar(3, character4);
+			LCD_Cursor(0x01);
+			LCD_WriteData(0x00);
+			LCD_Cursor(0x03);
+			LCD_WriteData(0x01);
+			LCD_Cursor(0x05);
+			LCD_WriteData(0x02);
+			LCD_Cursor(0x07);
+			LCD_WriteData(0x03);
+			break;
+		default:
+			break;
+	}
+
+	return state;
+}
 
 
 int main(void) {
@@ -108,8 +158,8 @@ int main(void) {
 	DDRD = 0xFF;	PORTD = 0x00;
     /* Insert your solution below */
 	LCD_init();
-	static task task1;
-	task *tasks[] = {&task1};
+	static task task1, task2;
+	task *tasks[] = {&task1, &task2};
 	const unsigned short numTasks = sizeof(tasks) / sizeof(task*);
 	const char start = 0;
 
@@ -117,6 +167,11 @@ int main(void) {
 	task1.period = 1000;
 	task1.elapsedTime = task1.period;
 	task1.TickFct = &toggleStartTick;
+
+	task2.state = start;
+	task2.period = 1000;
+	task2.elapsedTime = task2.period;
+	task2.TickFct = &chooseChar;
 
 	TimerSet(1000);
 	TimerOn();
