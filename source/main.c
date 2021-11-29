@@ -9,6 +9,7 @@
  */
 
 #include <avr/io.h>
+#include <avr/eeprom.h>
 #include <timer.h>
 #include <keypad.h>
 #include <io.h>
@@ -20,12 +21,26 @@
 #define startButton (~PINA & 0x01)
 #define scoreButton (~PINA & 0x02)
 #define resetButton (~PINA & 0x04)
+uint8_t highScore = 0x00;
 unsigned char startGame = 0x00;
-unsigned char bestScore = 8;
 unsigned char character1[8] = { 0x00,0x04,0x0A,0x11,0x0A,0x04,0x04,0x00 };
 unsigned char character2[8] = { 0x1F,0x00,0x0A,0x00,0x11,0x0E,0x00,0x1F };
 unsigned char character3[8] = { 0x11,0x0E,0x0A,0x04,0x15,0x0E,0x04,0x04 };
 unsigned char character4[8] = { 0x04,0x04,0x1F,0x15,0x04,0x0E,0x11,0x11 };
+
+//helper functions if needed
+void eeprom_Write(unsigned char addr, unsigned char data) {
+	eeprom_write_byte(addr, data);
+}
+
+unsigned char eeprom_Read(unsigned char addr) {
+	return eeprom_read_byte(addr);
+}
+
+void setHighScore() {
+	eeprom_write_word((uint8_t*)20, 4);
+	highScore = eeprom_read_byte((uint8_t*)20);
+}
 
 enum toggleStart_States {toggleStart_Init, toggleStart_press, toggleScore_press, toggleStart_wait, toggleScore_wait};
 
@@ -94,8 +109,9 @@ int toggleStartTick (int state) {
 			LCD_ClearScreen();
 			break;
 		case toggleScore_wait:
-			LCD_CustomChar(0, character1);
-			LCD_WriteData(0x00);
+			LCD_DisplayString(1, "Highest Score: ");
+			LCD_Cursor(15);
+			LCD_WriteData(highScore + '0');
 			break;
 	}
 	return state;
@@ -158,6 +174,7 @@ int main(void) {
 	DDRD = 0xFF;	PORTD = 0x00;
     /* Insert your solution below */
 	LCD_init();
+	setHighScore();
 	static task task1, task2;
 	task *tasks[] = {&task1, &task2};
 	const unsigned short numTasks = sizeof(tasks) / sizeof(task*);
