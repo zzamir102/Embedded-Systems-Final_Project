@@ -43,13 +43,13 @@ void LCD_WriteCommand (unsigned char Command) {
 void LCD_CustomChar(unsigned char column, unsigned char *string)
 {
  unsigned char i;
- if(column<8) //If valid address
+ if(column<8) 
  {
-  LCD_WriteCommand(0x40+(column*8)); //Write to CGRAM
+  LCD_WriteCommand(0x40+(column*8)); 
   for(i=0;i<8;i++)
-  LCD_WriteData(string[i]); //Write the character pattern to CGRAM
+  LCD_WriteData(string[i]); 
  }
-  LCD_WriteCommand(0x80); //shift back to DDRAM location 0
+  LCD_WriteCommand(0x80); 
 }
 
 void LCD_WriteData(unsigned char Data) {
@@ -72,7 +72,7 @@ void LCD_DisplayString( unsigned char column, const unsigned char* string) {
 
 void LCD_Cursor(unsigned char column) {
    if ( column < 17 ) { // 16x1 LCD: column < 9
-						// 16x2 LCD: column < 17
+						
       LCD_WriteCommand(0x80 + column - 1);
    } else {
       LCD_WriteCommand(0xB8 + column - 9);	// 16x1 LCD: column - 1
