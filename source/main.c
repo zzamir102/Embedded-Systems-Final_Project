@@ -18,9 +18,9 @@
 #include "simAVRHeader.h"
 #endif
 
-#define startButton (~PINA & 0x01)
-#define scoreButton (~PINA & 0x02)
-#define resetButton (~PINA & 0x04)
+#define startButton (~PINA & 0x08)
+#define scoreButton (~PINA & 0x10)
+#define resetButton (~PINA & 0x20)
 uint8_t highScore = 0x00;
 unsigned char startGame = 0x00;
 unsigned char character1[8] = { 0x00,0x04,0x0A,0x11,0x0A,0x04,0x04,0x00 };
