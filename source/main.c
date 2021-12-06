@@ -81,9 +81,9 @@ int joystick() {
 }
 
 unsigned int curr = 1;
-void move() {
+int move() {
 	position = joystick();
-	if (position == 1 && curr < 9) {
+	if (position == 1 && curr < 3) {
 		curr++;
 	}
 	else if (position == 2 && curr > 0) {
@@ -91,6 +91,7 @@ void move() {
 	}
 	LCD_Cursor(curr);
 	delay_ms(250);
+	return curr;
 }
 
 enum toggleStart_States {toggleStart_Init, toggleStart_press, toggleScore_press, toggleStart_wait, toggleScore_wait};
@@ -163,12 +164,25 @@ int toggleStartTick (int state) {
 			LCD_DisplayString(1, "Highest Score: ");
 			LCD_Cursor(15);
 			LCD_WriteData(highScore + '0');
+			//LCD_CustomChar(0, character1);
+			//LCD_CustomChar(1, character2);
+			//if (selectedCharacter == 1) {
+			//	LCD_cursor(16);
+			//	LCD_WriteData(0x00);	
+			//}
+			//else if (selectedCharacter == 3) {
+			//	LCD_cursor(16);
+			//	LCD_WriteData(0x01);
+			//}
 			break;
 	}
 	return state;
 }
 
 enum chooseChar_States {charInit, charSelect, charWait, initGame, waitGame};
+
+int pos1 = 0;
+int selectedCharacter = 0;
 
 int chooseChar(int state) {
 
@@ -191,7 +205,7 @@ int chooseChar(int state) {
 			break;
 		case charWait:
 			if (startGame == 0x01) {
-				if (startButton || scoreButton) {
+				if (startButton && pos1 == 1 || startButton && pos1 == 3) {
 					state = initGame;
 				}
 				else {
@@ -236,12 +250,18 @@ int chooseChar(int state) {
 			LCD_Cursor(0x01);
 			break;
 		case charWait:
+			pos1 = move();
+			if (pos1 == 1) {
+				selectedCharacter = 1;
+			}
+			else if (pos1 ==3) {
+				selectedCharacter = 2;
+			}
 			break;
 		case initGame:
 			LCD_DisplayString(1, "Game in progress");
 			break;
 		case waitGame:
-			move();
 			break;
 		default:
 			break;
