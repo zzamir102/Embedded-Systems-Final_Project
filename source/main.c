@@ -2,6 +2,7 @@
  *  Partner(s) Name: 
  *	Lab Section:21
  *	Assignment: Custom Lab Assignment
+ *	Website Used: https://scienceprog.com/using-analog-joystick-in-avr-projects/
  *	Exercise Description: [optional - include for your own benefit]
  *	Video Link: https://www.youtube.com/watch?v=n19NdQE5np0
  *	I acknowledge all content contained herein, excluding template or example
@@ -23,6 +24,7 @@
 #define resetButton (~PINA & 0x20)
 uint8_t highScore = 0x00;
 unsigned char startGame = 0x00;
+int position;
 unsigned char character1[8] = { 0x00,0x04,0x0A,0x11,0x0A,0x04,0x04,0x00 };
 unsigned char character2[8] = { 0x1F,0x00,0x0A,0x00,0x11,0x0E,0x00,0x1F };
 unsigned char character3[8] = { 0x11,0x0E,0x0A,0x04,0x15,0x0E,0x04,0x04 };
@@ -40,6 +42,55 @@ unsigned char eeprom_Read(unsigned char addr) {
 void setHighScore() {
 	eeprom_write_word((uint8_t*)20, 4);
 	highScore = eeprom_read_byte((uint8_t*)20);
+}
+
+void InitADC(void)
+{
+    ADMUX |= (1<<REFS0);
+  
+    ADCSRA |= (1<<ADPS1)|(1<<ADPS0)|(1<<ADEN);
+}
+
+uint16_t ReadADC(uint8_t ADCchannel)
+{
+    //select ADC channel with safety mask
+    ADMUX = (ADMUX & 0xF0) | (ADCchannel & 0x0F);
+    //single conversion mode
+    ADCSRA |= (1<<ADSC);
+    // wait until ADC conversion is complete
+    while( ADCSRA & (1<<ADSC) );
+    return ADC;
+}
+
+int joystick() {
+	int pos;
+	unsigned short x;
+
+	x = ReadADC(0);
+
+	if (x >= 600) {
+		pos = 1;
+	}
+	else if (x <= 500) {
+		pos = 2;
+	}
+	else {
+		pos = 0;
+	}
+	return pos;
+}
+
+unsigned int curr = 1;
+void move() {
+	position = joystick();
+	if (position == 1 && curr < 9) {
+		curr++;
+	}
+	else if (position == 2 && curr > 0) {
+		curr--;
+	}
+	LCD_Cursor(curr);
+	delay_ms(250);
 }
 
 enum toggleStart_States {toggleStart_Init, toggleStart_press, toggleScore_press, toggleStart_wait, toggleScore_wait};
@@ -117,7 +168,7 @@ int toggleStartTick (int state) {
 	return state;
 }
 
-enum chooseChar_States {charInit, charSelect};
+enum chooseChar_States {charInit, charSelect, charWait, initGame, waitGame};
 
 int chooseChar(int state) {
 
@@ -132,7 +183,37 @@ int chooseChar(int state) {
 			break;
 		case charSelect:
 			if (startGame == 0x01) {
-				state = charSelect;
+				state = charWait;
+			}
+			else {
+				state = charInit;
+			}
+			break;
+		case charWait:
+			if (startGame == 0x01) {
+				if (startButton || scoreButton) {
+					state = initGame;
+				}
+				else {
+					state = charWait;	
+				}
+				break;
+			}
+			else {
+				state = charInit;
+			}
+			break;
+		case initGame:
+			if (startGame == 0x01) {
+				state = waitGame;
+			}
+			else {
+				state = charInit;
+			}
+			break;
+		case waitGame:
+			if (startGame == 0x01) {
+				state = waitGame;
 			}
 			else {
 				state = charInit;
@@ -148,16 +229,19 @@ int chooseChar(int state) {
 			LCD_DisplayString(17, "Character Select");
 			LCD_CustomChar(0, character1);
 			LCD_CustomChar(1, character2);
-			LCD_CustomChar(2, character3);
-			LCD_CustomChar(3, character4);
 			LCD_Cursor(0x01);
 			LCD_WriteData(0x00);
 			LCD_Cursor(0x03);
 			LCD_WriteData(0x01);
-			LCD_Cursor(0x05);
-			LCD_WriteData(0x02);
-			LCD_Cursor(0x07);
-			LCD_WriteData(0x03);
+			LCD_Cursor(0x01);
+			break;
+		case charWait:
+			break;
+		case initGame:
+			LCD_DisplayString(1, "Game in progress");
+			break;
+		case waitGame:
+			move();
 			break;
 		default:
 			break;
@@ -166,7 +250,6 @@ int chooseChar(int state) {
 	return state;
 }
 
-
 int main(void) {
     /* Insert DDR and PORT initializations */
 	DDRA = 0x00;	PORTA = 0xFF;
@@ -174,6 +257,7 @@ int main(void) {
 	DDRD = 0xFF;	PORTD = 0x00;
     /* Insert your solution below */
 	LCD_init();
+	InitADC();
 	setHighScore();
 	static task task1, task2;
 	task *tasks[] = {&task1, &task2};
@@ -186,13 +270,12 @@ int main(void) {
 	task1.TickFct = &toggleStartTick;
 
 	task2.state = start;
-	task2.period = 1000;
+	task2.period = 10;
 	task2.elapsedTime = task2.period;
 	task2.TickFct = &chooseChar;
 
-	TimerSet(1000);
+	TimerSet(10);
 	TimerOn();
-
 
 	unsigned short i;
 	while (1) {
@@ -201,7 +284,7 @@ int main(void) {
 			tasks[i]->state = tasks[i]->TickFct(tasks[i]->state);
 			tasks[i]->elapsedTime = 0;
 		}
-		tasks[i]->elapsedTime += 1000;
+		tasks[i]->elapsedTime += 10;
 	}
 	while (!TimerFlag);
 	TimerFlag = 0;
