@@ -22,7 +22,8 @@
 #define startButton (~PINA & 0x08)
 #define scoreButton (~PINA & 0x10)
 #define resetButton (~PINA & 0x20)
-uint8_t highScore = 0x00;
+uint8_t highScore;
+uint8_t characterChose;
 unsigned char startGame = 0x00;
 int position;
 unsigned char character1[8] = { 0x00,0x04,0x0A,0x11,0x0A,0x04,0x04,0x00 };
@@ -42,6 +43,7 @@ unsigned char eeprom_Read(unsigned char addr) {
 void setHighScore() {
 	eeprom_write_word((uint8_t*)20, 4);
 	highScore = eeprom_read_byte((uint8_t*)20);
+	//characterChose = eeprom_read_byte((uint8_t*)22);
 }
 
 void InitADC(void)
@@ -164,16 +166,17 @@ int toggleStartTick (int state) {
 			LCD_DisplayString(1, "Highest Score: ");
 			LCD_Cursor(15);
 			LCD_WriteData(highScore + '0');
-			//LCD_CustomChar(0, character1);
-			//LCD_CustomChar(1, character2);
-			//if (selectedCharacter == 1) {
-			//	LCD_cursor(16);
-			//	LCD_WriteData(0x00);	
-			//}
-			//else if (selectedCharacter == 3) {
-			//	LCD_cursor(16);
-			//	LCD_WriteData(0x01);
-			//}
+			characterChose = eeprom_Read(0x00);
+			if (characterChose == 1) {
+				LCD_CustomChar(0, character1);
+				LCD_Cursor(16);
+				LCD_WriteData(0x00);	
+			}
+			else if (characterChose == 2) {
+				LCD_CustomChar(0, character2);
+				LCD_Cursor(16);
+				LCD_WriteData(0x01);
+			}
 			break;
 	}
 	return state;
@@ -182,7 +185,6 @@ int toggleStartTick (int state) {
 enum chooseChar_States {charInit, charSelect, charWait, initGame, waitGame};
 
 int pos1 = 0;
-int selectedCharacter = 0;
 
 int chooseChar(int state) {
 
@@ -205,8 +207,13 @@ int chooseChar(int state) {
 			break;
 		case charWait:
 			if (startGame == 0x01) {
-				if (startButton && pos1 == 1 || startButton && pos1 == 3) {
+				if (startButton && pos1 == 1) {
 					state = initGame;
+					eeprom_Write(0x00, 1);
+				}
+				else if (startButton && pos1 == 3) {
+					state = initGame;
+					eeprom_Write(0x00, 2);
 				}
 				else {
 					state = charWait;	
@@ -251,12 +258,6 @@ int chooseChar(int state) {
 			break;
 		case charWait:
 			pos1 = move();
-			if (pos1 == 1) {
-				selectedCharacter = 1;
-			}
-			else if (pos1 ==3) {
-				selectedCharacter = 2;
-			}
 			break;
 		case initGame:
 			LCD_DisplayString(1, "Game in progress");
