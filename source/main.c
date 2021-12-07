@@ -3,6 +3,7 @@
  *	Lab Section:21
  *	Assignment: Custom Lab Assignment
  *	Website Used: https://scienceprog.com/using-analog-joystick-in-avr-projects/
+ *		      https://www.electronicwings.com/avr-atmega/lcd-custom-character-display-using-atmega-16-32-
  *	Exercise Description: [optional - include for your own benefit]
  *	Video Link: https://www.youtube.com/watch?v=n19NdQE5np0
  *	I acknowledge all content contained herein, excluding template or example
